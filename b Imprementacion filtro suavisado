@@ -1,1 +1,140 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace b_Imprementacion_filtro_suavisado
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog1 = new OpenFileDialog();
+            openFileDialog1.Filter = "Imágenes|*.jpg;*.jpeg;*.png;*.bmp";
+
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                pictureBox1.Image = Image.FromFile(openFileDialog1.FileName);
+                // Ajustar la imagen al tamaño del PictureBox
+                pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
+                pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (pictureBox1.Image == null)
+            {
+                MessageBox.Show("Por favor, carga una imagen primero.");
+                return;
+            }
+
+            Bitmap imgOriginal = new Bitmap(pictureBox1.Image);
+            Bitmap imgResultado = new Bitmap(imgOriginal.Width, imgOriginal.Height);
+
+            // Recorremos la imagen. NOTA: Empezamos en 1 y terminamos en Width-1 
+            // para no salirnos de los bordes al abrir la ventana de 3x3.
+            for (int x = 1; x < imgOriginal.Width - 1; x++)
+            {
+                for (int y = 1; y < imgOriginal.Height - 1; y++)
+                {
+                    int sumaR = 0;
+                    int sumaG = 0;
+                    int sumaB = 0;
+
+                    // --- RECORRER LA VENTANA DE 3x3 ---
+                    // Este par de bucles pequeños toman al píxel (x, y) como centro
+                    // y se mueven una posición a la izquierda, derecha, arriba y abajo.
+                    for (int kx = -1; kx <= 1; kx++)
+                    {
+                        for (int ky = -1; ky <= 1; ky++)
+                        {
+                            Color pixelVecino = imgOriginal.GetPixel(x + kx, y + ky);
+
+                            sumaR += pixelVecino.R;
+                            sumaG += pixelVecino.G;
+                            sumaB += pixelVecino.B;
+                        }
+                    }
+
+                    // --- CALCULAR EL PROMEDIO ---
+                    // Dividimos entre 9 porque son 9 píxeles en la ventana de 3x3
+                    int promedioR = sumaR / 9;
+                    int promedioG = sumaG / 9;
+                    int promedioB = sumaB / 9;
+
+                    // Crear el nuevo color suavizado y asignarlo a la imagen de resultado
+                    Color colorSuavizado = Color.FromArgb(promedioR, promedioG, promedioB);
+                    imgResultado.SetPixel(x, y, colorSuavizado);
+                }
+            }
+
+            // Mostrar el resultado en el segundo PictureBox
+            pictureBox2.Image = imgResultado;
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (pictureBox1.Image == null)
+            {
+                MessageBox.Show("Por favor, carga una imagen primero.");
+                return;
+            }
+
+            Bitmap imgOriginal = new Bitmap(pictureBox1.Image);
+            Bitmap imgResultado = new Bitmap(imgOriginal.Width, imgOriginal.Height);
+
+            // Definimos cuántas veces queremos aplicar el filtro para forzar el cambio visual
+            int iteraciones = 6;
+
+            // Clonamos la imagen inicial para empezar el proceso iterativo
+            Bitmap imgActual = (Bitmap)imgOriginal.Clone();
+
+            for (int paso = 0; paso < iteraciones; paso++)
+            {
+                imgResultado = new Bitmap(imgActual.Width, imgActual.Height);
+
+                // Recorremos la imagen a nivel de píxel con la ventana de 3x3
+                for (int x = 1; x < imgActual.Width - 1; x++)
+                {
+                    for (int y = 1; y < imgActual.Height - 1; y++)
+                    {
+                        int sumaR = 0, sumaG = 0, sumaB = 0;
+
+                        // Ventana 3x3
+                        for (int kx = -1; kx <= 1; kx++)
+                        {
+                            for (int ky = -1; ky <= 1; ky++)
+                            {
+                                Color pixelVecino = imgActual.GetPixel(x + kx, y + ky);
+                                sumaR += pixelVecino.R;
+                                sumaG += pixelVecino.G;
+                                sumaB += pixelVecino.B;
+                            }
+                        }
+
+                        // Asignamos el promedio al píxel central
+                        imgResultado.SetPixel(x, y, Color.FromArgb(sumaR / 9, sumaG / 9, sumaB / 9));
+                    }
+                }
+
+                // Para la siguiente pasada, usamos el resultado de la pasada anterior
+                imgActual = (Bitmap)imgResultado.Clone();
+            }
+
+            // Mostrar el resultado final bien suavizado en el segundo PictureBox
+            pictureBox2.Image = imgResultado;
+        }
+    }
+}
 
