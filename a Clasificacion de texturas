@@ -1,1 +1,96 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace a_Clasificacion_de_texturas
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            // 1. Validar que tengamos una imagen cargada
+            if (pictureBox1.Image == null)
+            {
+                MessageBox.Show("Por favor, carga una imagen primero.");
+                return;
+            }
+
+            // 2. Crear un Bitmap a partir de la imagen original
+            Bitmap imgOriginal = new Bitmap(pictureBox1.Image);
+
+            // 3. Crear un Bitmap vacío del mismo tamaño para el resultado
+            Bitmap imgResultado = new Bitmap(imgOriginal.Width, imgOriginal.Height);
+
+            // 4. Recorrer la imagen fila por fila, píxel por píxel
+            for (int x = 0; x < imgOriginal.Width; x++)
+            {
+                for (int y = 0; y < imgOriginal.Height; y++)
+                {
+                    // Obtener el color del píxel actual
+                    Color pixelActual = imgOriginal.GetPixel(x, y);
+
+                    int r = pixelActual.R;
+                    int g = pixelActual.G;
+                    int b = pixelActual.B;
+
+                    // --- LÓGICA DE CLASIFICACIÓN POR COLOR (RGB) ---
+
+                    // A. CÉSPED: Si el componente Verde (G) es notablemente mayor que el Rojo y Azul
+                    if (g > r && g > b && g > 40)
+                    {
+                        imgResultado.SetPixel(x, y, Color.Green);
+                    }
+                    // B. TIERRA: Tonos marrones (Rojo alto, Verde medio, Azul bajo)
+                    else if (r > g && g > b && r > 100 && b < 80)
+                    {
+                        imgResultado.SetPixel(x, y, Color.SaddleBrown);
+                    }
+                    // C. ASFALTO: Grises muy oscuros (R, G y B son muy similares y bajos)
+                    else if (Math.Abs(r - g) < 15 && Math.Abs(g - b) < 15 && r < 80)
+                    {
+                        imgResultado.SetPixel(x, y, Color.DarkGray);
+                    }
+                    // D. CEMENTO: Grises claros (R, G y B similares pero altos)
+                    else if (Math.Abs(r - g) < 15 && Math.Abs(g - b) < 15 && r >= 80)
+                    {
+                        imgResultado.SetPixel(x, y, Color.LightGray);
+                    }
+                    // E. Si no encaja en ninguno (por si acaso)
+                    else
+                    {
+                        imgResultado.SetPixel(x, y, Color.Black);
+                    }
+                }
+            }
+
+            // 5. Mostrar el mapa de texturas clasificado en el segundo PictureBox
+            pictureBox2.Image = imgResultado;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog1 = new OpenFileDialog();
+            openFileDialog1.Filter = "Imágenes|*.jpg;*.jpeg;*.png;*.bmp";
+
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                pictureBox1.Image = Image.FromFile(openFileDialog1.FileName);
+                // Ajustar la imagen al tamaño del PictureBox
+                pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
+                pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
+            }
+        }
+    }
+}
 
